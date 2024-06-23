@@ -17,6 +17,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 
+/**
+ * ping服务每秒发出一个请求
+ * @author Hanley
+ */
 @Slf4j
 @Service
 public class PingService {
@@ -41,12 +45,15 @@ public class PingService {
     @PostConstruct
     public void init() {
         log.info("PingService {} started", appName);
-        Flux.interval(Duration.ofSeconds(1))
+        Flux.interval(Duration.ofSeconds(1))// 每秒产出一个元素
                 .flatMap(i -> pingPong())
                 .subscribe();
     }
 
-
+    /**
+     * 多个jvm进程同时发送请求将通过File Lock控制只允许最多两个Ping服务发出请求
+     * @return Mono
+     */
     public Mono<String> pingPong() {
         return Mono.defer(() -> {
             if (acquireLock()) {
@@ -72,6 +79,10 @@ public class PingService {
     }
 
 
+    /**
+     * 通过webClient发送异步请求
+     * @return Mono
+     */
     public Mono<String> sayHello() {
 
         return webClient.get()
@@ -82,7 +93,7 @@ public class PingService {
 
     /**
      * Multiple Ping Services should be running as separate JVM Process with capability of Rate Limit Control across all processes with only 2 RPS
-     * @return
+     * @return if you get lock
      */
     public boolean acquireLock() {
         FileChannel channel = null;

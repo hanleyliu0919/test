@@ -16,6 +16,11 @@ public class PongController {
     // 每秒只创建一个元素
     private final RateLimiter rateLimiter = RateLimiter.create(1.0);
 
+    /**
+     * pong 服务控制每秒只允许一个ping服务请求该接口，多余请求响应429
+     * @param appName 服务名
+     * @return
+     */
     @GetMapping("/hello")
     public Mono<ResponseEntity<String>> hello(@RequestParam String appName) {
         log.info("has new request appName:{}", appName);
