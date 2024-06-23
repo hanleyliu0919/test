@@ -28,7 +28,7 @@ public class PongController {
         //尝试获取rateLimiter元素
         if (rateLimiter.tryAcquire()) {
             log.info("request successful, current appName:{} , time:{}", appName, System.currentTimeMillis());
-            return Mono.just(ResponseEntity.ok().body("world"));
+            return Mono.just(ResponseEntity.ok().body("World"));
         } else {
             log.info("request failed, current appName:{} , time:{}", appName, System.currentTimeMillis());
             return Mono.just(ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body("Too many requests."));
