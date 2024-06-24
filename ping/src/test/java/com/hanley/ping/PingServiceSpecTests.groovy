@@ -9,11 +9,6 @@ import reactor.core.publisher.Mono
 import spock.lang.Specification
 import spock.lang.Subject
 
-import java.nio.channels.FileChannel
-import java.nio.channels.FileLock
-import java.nio.file.OpenOption
-import java.nio.file.Path
-
 @WebFluxTest(SpringExtension.class)
 class PingServiceSpecTests extends Specification {
 
@@ -40,7 +35,6 @@ class PingServiceSpecTests extends Specification {
         given:
         def responseSpec = Mock(WebClient.ResponseSpec)
         def uriSpec = Mock(WebClient.RequestHeadersUriSpec)
-        pingService.metaClass.acquireLock = { -> true }
 
         when:
         def result = pingService.pingPong().block()
@@ -53,35 +47,37 @@ class PingServiceSpecTests extends Specification {
         result == "World"
     }
 
-    def "should not send hello when rate limited"() {
+    def "should send hello and receive pong response status code with 429"() {
         given:
-        pingService.metaClass.acquireLock = { -> false }
+        def responseSpec = Mock(WebClient.ResponseSpec)
+        def uriSpec = Mock(WebClient.RequestHeadersUriSpec)
 
         when:
-        pingService.pingPong()
+        def result = pingService.pingPong().block()
 
         then:
-        0 * webClient.get()
+        1 * webClient.get() >> uriSpec
+        1 * uriSpec.uri("/hello?appName=" + appName) >> uriSpec
+        1 * uriSpec.retrieve() >> responseSpec
+        1 * responseSpec.bodyToMono(String) >> Mono.error(new RuntimeException("Too Many Requests (429)"))
+        result == "Pong throttled it."
     }
 
-    def "acquireLock should return false when requests exceed limit"() {
+    def "should send hello and receive pong response error"() {
         given:
-        def channel = Mock(FileChannel)
-        def lock = Mock(FileLock)
-        Path.metaClass.static.get = { String first, String... more ->
-            Mock(Path)
-        }
-        FileChannel.metaClass.static.open = { Path path, OpenOption... options ->
-            channel
-        }
+        def responseSpec = Mock(WebClient.ResponseSpec)
+        def uriSpec = Mock(WebClient.RequestHeadersUriSpec)
+        // pingService.metaClass.acquireLock = { -> true }
 
         when:
-        def result = pingService.acquireLock()
+        def result = pingService.pingPong().block()
 
         then:
-        0 * channel.tryLock() >> lock
-        0 * channel.write(_ as byte[])
+        1 * webClient.get() >> uriSpec
+        1 * uriSpec.uri("/hello?appName=" + appName) >> uriSpec
+        1 * uriSpec.retrieve() >> responseSpec
+        1 * responseSpec.bodyToMono(String) >> Mono.error(new RuntimeException("server response 500"))
+        result == "Request failed : server response 500"
     }
-
 
 }

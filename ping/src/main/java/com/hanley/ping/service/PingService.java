@@ -60,11 +60,10 @@ public class PingService {
                             if (error.getMessage().contains("429")) {
                                 log.info("Request send & Pong throttled it.");
                                 // 返回一个默认值或空的 Mono
-                                return Mono.empty();
+                                return Mono.just("Pong throttled it.");
                             } else {
-                                log.error("Request failed: {}", error.getMessage(), error);
-                                // 或者抛出异常，让外部处理
-                                return Mono.error(error);
+                                log.error("Request failed: {}", error.getMessage());
+                                return Mono.just("Request failed : " + error.getMessage());
                             }
                         });
             } else {
@@ -136,15 +135,13 @@ public class PingService {
             if (lock != null) {
                 try {
                     lock.release();
-                } catch (IOException e) {
-                    log.error("Error releasing file lock", e);
+                } catch (IOException ignored) {
                 }
             }
             if (channel != null) {
                 try {
                     channel.close();
-                } catch (IOException e) {
-                    log.error("Error closing file channel", e);
+                } catch (IOException ignored) {
                 }
             }
         }
