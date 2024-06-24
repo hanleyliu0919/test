@@ -107,8 +107,14 @@ public class PingService {
             channel.read(buffer, 0);
             buffer.flip();
 
-            long lastRequestTime = buffer.getLong();
-            int requestCount = buffer.getInt();
+            long lastRequestTime = 0;
+            if (buffer.remaining() >= Long.BYTES) {
+                buffer.getLong();
+            }
+            int requestCount = 0;
+            if (buffer.remaining() >= Integer.BYTES) {
+                requestCount = buffer.getInt();
+            }
 
             if (lastRequestTime < startOfSecond) {
                 lastRequestTime = startOfSecond;

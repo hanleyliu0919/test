@@ -53,24 +53,6 @@ class PingServiceSpecTests extends Specification {
         result == "World"
     }
 
-    def "should send hello and receive pong response 429 status code"() {
-        given:
-        def responseSpec = Mock(WebClient.ResponseSpec)
-        def uriSpec = Mock(WebClient.RequestHeadersUriSpec)
-
-        pingService.metaClass.acquireLock = { -> true }
-
-        when:
-        def result = pingService.pingPong().block()
-
-        then:
-        1 * webClient.get() >> uriSpec
-        1 * uriSpec.uri("/hello?appName=" + appName) >> uriSpec
-        1 * uriSpec.retrieve() >> responseSpec
-        1 * responseSpec.bodyToMono(String) >> Mono.just("World")
-        result == "World"
-    }
-
     def "should not send hello when rate limited"() {
         given:
         pingService.metaClass.acquireLock = { -> false }

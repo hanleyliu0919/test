@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+
 @Slf4j
 @RestController
 public class PongController {
@@ -17,20 +19,20 @@ public class PongController {
     private final RateLimiter rateLimiter = RateLimiter.create(1.0);
 
     /**
-     * pong 服务控制每秒只允许一个ping服务请求该接口，多余请求响应429
+     * pong服务控制每秒只允许一个ping服务请求该接口，多余请求响应429
      * @param appName 服务名
      * @return
      */
     @GetMapping("/hello")
     public Mono<ResponseEntity<String>> hello(@RequestParam String appName) {
-        log.info("has new request appName:{}", appName);
+        log.info("have new request, appName:{}", appName);
 
         //尝试获取rateLimiter元素
         if (rateLimiter.tryAcquire()) {
-            log.info("request successful, current appName:{} , time:{}", appName, System.currentTimeMillis());
+            log.info("request successful, current appName:{} , time:{}", appName, LocalDateTime.now());
             return Mono.just(ResponseEntity.ok().body("World"));
         } else {
-            log.info("request failed, current appName:{} , time:{}", appName, System.currentTimeMillis());
+            log.info("request failed, current appName:{} , time:{}", appName, LocalDateTime.now());
             return Mono.just(ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body("Too many requests."));
         }
     }
