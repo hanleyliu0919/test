@@ -24,7 +24,6 @@
                 <version>${spring-boot.version}</version>
                 <configuration>
                     <mainClass>com.hanley.ping03.Ping03Application</mainClass>
-                    <skip>true</skip>
                 </configuration>
                 <executions>
                     <execution>
